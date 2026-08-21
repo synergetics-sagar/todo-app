@@ -49,7 +49,19 @@ async function updateTaskCompletion(taskId, completed) {
 	return response.json();
 }
 
-function renderTasks(tasks) {
+async function deleteTask(taskId) {
+	const response = await fetch(`${TASKS_API_URL}/${taskId}`, {
+		method: "DELETE"
+	});
+
+	if (!response.ok) {
+		const error = new Error("Failed to delete task");
+		error.status = response.status;
+		throw error;
+	}
+}
+
+function renderTasks(taskItems) {
 	const taskListElement = document.getElementById("task-list");
 	const statusMessageElement = document.getElementById("status-message");
 
@@ -59,17 +71,18 @@ function renderTasks(tasks) {
 
 	taskListElement.textContent = "";
 
-	if (!Array.isArray(tasks) || tasks.length === 0) {
+	if (!Array.isArray(taskItems) || taskItems.length === 0) {
 		statusMessageElement.textContent = "No tasks yet - add one below.";
 		return;
 	}
 
 	statusMessageElement.textContent = "";
 
-	tasks.forEach((task) => {
+	taskItems.forEach((task) => {
 		const listItem = document.createElement("li");
 		const checkbox = document.createElement("input");
 		const title = document.createElement("span");
+		const deleteButton = document.createElement("button");
 		const taskMessage = document.createElement("span");
 		const taskCompleted = Boolean(task.completed);
 
@@ -104,13 +117,35 @@ function renderTasks(tasks) {
 			}
 		});
 
+		deleteButton.type = "button";
+		deleteButton.textContent = "Delete";
+		deleteButton.addEventListener("click", async () => {
+			const previousTasks = [...tasks];
+			taskFeedbackById.delete(task.id);
+
+			tasks = tasks.filter((currentTask) => currentTask.id !== task.id);
+			renderTasks(tasks);
+
+			try {
+				await deleteTask(task.id);
+			} catch (error) {
+				if (error && error.status === 404) {
+					return;
+				}
+
+				tasks = previousTasks;
+				taskFeedbackById.set(task.id, "Couldn't delete task — try again.");
+				renderTasks(tasks);
+			}
+		});
+
 		title.textContent = String(task.title ?? "");
 		title.style.textDecoration = taskCompleted ? "line-through" : "none";
 
 		taskMessage.textContent = taskFeedbackById.get(task.id) || "";
 		taskMessage.className = "task-message";
 
-		listItem.append(checkbox, title, taskMessage);
+		listItem.append(checkbox, title, deleteButton, taskMessage);
 		taskListElement.appendChild(listItem);
 	});
 }
