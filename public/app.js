@@ -1,6 +1,29 @@
 const TASKS_API_URL = "http://localhost:3000/tasks";
 let tasks = [];
 const taskFeedbackById = new Map();
+let currentFilter = "all";
+
+function getFilteredTasks(taskItems) {
+	if (currentFilter === "active") {
+		return taskItems.filter((task) => task.completed === false);
+	}
+
+	if (currentFilter === "completed") {
+		return taskItems.filter((task) => task.completed === true);
+	}
+
+	return taskItems;
+}
+
+function renderFilterControls() {
+	const filterButtons = document.querySelectorAll(".filter-button");
+
+	filterButtons.forEach((button) => {
+		const isActive = button.dataset.filter === currentFilter;
+		button.classList.toggle("is-active", isActive);
+		button.setAttribute("aria-pressed", String(isActive));
+	});
+}
 
 async function fetchTasks() {
 	const response = await fetch(TASKS_API_URL);
@@ -64,6 +87,7 @@ async function deleteTask(taskId) {
 function renderTasks(taskItems) {
 	const taskListElement = document.getElementById("task-list");
 	const statusMessageElement = document.getElementById("status-message");
+ 	const visibleTasks = getFilteredTasks(taskItems);
 
 	if (!taskListElement || !statusMessageElement) {
 		return;
@@ -71,14 +95,15 @@ function renderTasks(taskItems) {
 
 	taskListElement.textContent = "";
 
-	if (!Array.isArray(taskItems) || taskItems.length === 0) {
+	if (!Array.isArray(taskItems) || taskItems.length === 0 || visibleTasks.length === 0) {
 		statusMessageElement.textContent = "No tasks yet - add one below.";
+		renderFilterControls();
 		return;
 	}
 
 	statusMessageElement.textContent = "";
 
-	taskItems.forEach((task) => {
+	visibleTasks.forEach((task) => {
 		const listItem = document.createElement("li");
 		const checkbox = document.createElement("input");
 		const title = document.createElement("span");
@@ -148,6 +173,8 @@ function renderTasks(taskItems) {
 		listItem.append(checkbox, title, deleteButton, taskMessage);
 		taskListElement.appendChild(listItem);
 	});
+
+	renderFilterControls();
 }
 
 function handleFormSubmit(event) {
@@ -194,9 +221,22 @@ async function loadTasks() {
 
 document.addEventListener("DOMContentLoaded", () => {
 	const formElement = document.getElementById("task-form");
+	const filterButtons = document.querySelectorAll(".filter-button");
 	if (formElement) {
 		formElement.addEventListener("submit", handleFormSubmit);
 	}
+
+	filterButtons.forEach((button) => {
+		button.addEventListener("click", () => {
+			const selectedFilter = button.dataset.filter;
+			if (!selectedFilter || selectedFilter === currentFilter) {
+				return;
+			}
+
+			currentFilter = selectedFilter;
+			renderTasks(tasks);
+		});
+	});
 
 	loadTasks();
 });

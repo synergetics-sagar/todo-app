@@ -13,6 +13,11 @@
       <button type="submit">Add</button>
       <p id="form-message"></p>
     </form>
+    <div id="filter-controls" aria-label="Task filters">
+      <button type="button" data-filter="all" class="filter-button is-active" aria-pressed="true">All</button>
+      <button type="button" data-filter="active" class="filter-button" aria-pressed="false">Active</button>
+      <button type="button" data-filter="completed" class="filter-button" aria-pressed="false">Completed</button>
+    </div>
     <p id="status-message"></p>
     <ul id="task-list"></ul>
   </main>
