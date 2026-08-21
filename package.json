@@ -1,0 +1,15 @@
+{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start:api": "json-server --watch db.json --port 3000",
+    "start:web": "serve public -l 5000",
+    "start": "concurrently \"npm:start:api\" \"npm:start:web\""
+  },
+  "devDependencies": {
+    "json-server": "^0.17.4",
+    "serve": "^14.2.0",
+    "concurrently": "^8.2.0"
+  }
+}
